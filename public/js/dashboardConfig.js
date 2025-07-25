@@ -53,23 +53,37 @@ const COLUMN_MAPPINGS = {
         'cda_floor_price_usd': 'CDA Floor USD',
         'cda_floor_margin_percent': 'CDA Margin %',
          
-        // --- NEW: CpaaS/High Volumes Columns ---
+        
         'cpaas_high_volumes_floor_usd': 'CpaaS High Vol USD', // Derived
         'cpaas_high_volumes_margin_percent': 'CpaaS High Vol Margin %', // Derived
 
-        // --- NEW: Service Provider/Medium Volume Columns ---
+        
         'service_provider_medium_volume_floor_usd': 'SP/Med Vol USD', // Derived
         'service_provider_medium_volume_margin_percent': 'SP/Med Vol Margin %', // Derived
 
-        // Small Volume
+        
         'small_volume_list_price_usd': 'Small Vol List Price USD', // Derived
         'small_volume_margin_percent': 'Small Vol Margin %',
          // Derived
          'small_volume_list_price_usd': 'Small Vol List Price USD', // Derived
         'small_volume_margin_percent': 'Small Vol Margin %', // Derived
         'refer_legend': 'Refer Legend',
+        
         'sl_internal': 'SL (Internal)',
         'comments_internal': 'Comments (Internal)'
+    },
+    'international_surcharge':{
+        'id' : 'ID',
+         'obc_region_country':'OBC Region Country',
+    'obc_region_destination':'OBC Region Destination',
+    'origin_country_code': 'Origin Country Code',
+    'origin_country_name': 'Origin Country Name',
+    'dest_id': 'Dest ID',
+    'region_type_co': 'Region Type - CO',
+    'amount': 'Surcharge Amount',
+    'currency' :'Currency',
+    'key_internal':'KEY (Internal)',
+    'amount_usd':'Amount (USD)'
     }
 };
 
@@ -118,7 +132,7 @@ const DERIVED_INFO = {
  * NEW: Configuration for the Legend and Assumptions sheet in the Excel export.
  */
 const LEGEND_AND_ASSUMPTIONS = {
-    // This content will be added as a second sheet for the 'international_outbound_rates' product.
+    
     'international_outbound_rates': {
         legendAlpha: [
             { code: 'A', description: 'Standard destinations open for calling' },
@@ -146,6 +160,6 @@ const LEGEND_AND_ASSUMPTIONS = {
             'Surcharge rates are in the local currency of the destinations and charged on per minute basis in addition to base termination rate. Basis the quote currency agreed as part of the contract, currency conversion would take place using exchange rate during order delivery to bill the surcharge amount.'
         ]
     }
-    // You can add configurations for other products here if they have different legends.
+    
 };
 

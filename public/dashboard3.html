@@ -112,6 +112,36 @@
     color: var(--danger-red);
 }
 
+/* --- New Styles for Checkbox Dropdown --- */
+
+/* Style for each item in the dropdown list */
+.dropdown-menu li {
+    padding: 0 8px; /* Adjust padding for a cleaner look */
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+/* Add a hover effect to each list item */
+.dropdown-menu li:hover {
+    background-color: var(--bg);
+}
+
+/* Use Flexbox on the label for perfect alignment */
+.dropdown-menu label {
+    display: flex;
+    align-items: center; /* Vertically aligns the checkbox with the text */
+    cursor: pointer;
+    padding: 10px 4px; /* Give the text some space */
+    font-weight: 500;
+    width: 100%;
+}
+
+/* Add some space between the checkbox and its text label */
+.dropdown-menu input[type="checkbox"] {
+    margin-right: 12px; /* Adjust spacing as needed */
+    width: 16px;        /* Set a consistent size */
+    height: 16px;       /* Set a consistent size */
+}
 
 
 
@@ -140,7 +170,7 @@
                     <label>Viewing</label>
                     <div class="custom-dropdown" id="customFloorDropdown">
                         <div class="dropdown-button" id="dropdownButton">
-                            <span id="selectedValue"></span>
+                            <span id="selectedValue">Select Floor Views</span>
                             <i class="fas fa-chevron-down chevron"></i>
                         </div>
                         <ul class="dropdown-menu" id="dropdownMenu"></ul>
@@ -369,27 +399,26 @@
         });
     }
 
-    function updateDropdown(options, selectedKey) {
-        dropdownMenu.innerHTML = '';
-        options.forEach(optionKey => {
-            const li = document.createElement('li');
-            li.textContent = optionKey;
-            li.dataset.value = optionKey;
-            if (optionKey === selectedKey) {
-                li.classList.add('selected');
-                selectedValueSpan.textContent = optionKey;
-            }
-            li.addEventListener('click', () => {
-                selectedValueSpan.textContent = optionKey;
-                dropdownMenu.querySelector('.selected')?.classList.remove('selected');
-                li.classList.add('selected');
-                dropdownMenu.classList.remove('open');
-                dropdownButton.classList.remove('open');
-                applyFloorView();
-            });
-            dropdownMenu.appendChild(li);
-        });
-    }
+    function setupFloorCheckboxes(options) {
+    dropdownMenu.innerHTML = ''; // Clear previous items
+    
+    options.forEach((optionKey, index) => {
+        const li = document.createElement('li');
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = optionKey;
+        if (index === 0) checkbox.checked = true; // Check first option by default
+
+        label.appendChild(checkbox);
+        label.append(` ${optionKey}`);
+        li.appendChild(label);
+        dropdownMenu.appendChild(li);
+    });
+
+    // Add a single event listener to the parent menu
+    dropdownMenu.addEventListener('change', applyFloorView);
+}
 
     // --- UI STATE MANAGEMENT ---
     function updateUIForNoProduct() {
@@ -414,7 +443,7 @@
         if (floorConfigForProduct) {
             floorSelectorContainer.style.display = 'block';
             const options = Object.keys(floorConfigForProduct);
-            updateDropdown(options, options[0]); // Select the first option by default
+            setupFloorCheckboxes(options); // Select the first option by default
         } else {
             floorSelectorContainer.style.display = 'none';
         }
@@ -433,26 +462,33 @@
         renderTable(currentFilteredData);
     }
 
-    function applyFloorView() {
-        const floorConfigForProduct = FLOOR_CONFIG[currentLoadedTableName];
-        if (!floorConfigForProduct) {
-            document.querySelectorAll('#ratesTable [data-col-key]').forEach(el => el.style.display = '');
-            return;
-        }
-        
-        const selectedFloor = selectedValueSpan.textContent;
-        const columnsForSelectedFloor = floorConfigForProduct[selectedFloor] || [];
-        const allPossibleFloorColumns = Object.values(floorConfigForProduct).flat();
-
-        document.querySelectorAll('#ratesTable [data-col-key]').forEach(el => {
-            const key = el.dataset.colKey;
-            if (!allPossibleFloorColumns.includes(key)) {
-                el.style.display = '';
-            } else {
-                el.style.display = columnsForSelectedFloor.includes(key) ? '' : 'none';
-            }
-        });
+   function applyFloorView() {
+    const floorConfigForProduct = FLOOR_CONFIG[currentLoadedTableName];
+    if (!floorConfigForProduct) {
+        document.querySelectorAll('#ratesTable [data-col-key]').forEach(el => el.style.display = '');
+        return;
     }
+    
+    // Get all columns from the currently checked boxes
+    const visibleFloorColumns = new Set();
+    const checkboxes = dropdownMenu.querySelectorAll('input[type="checkbox"]:checked');
+    checkboxes.forEach(box => {
+        const columnsForFloor = floorConfigForProduct[box.value] || [];
+        columnsForFloor.forEach(col => visibleFloorColumns.add(col));
+    });
+
+    const allPossibleFloorColumns = Object.values(floorConfigForProduct).flat();
+
+    // Show/hide columns based on the set of visible columns
+    document.querySelectorAll('#ratesTable [data-col-key]').forEach(el => {
+        const key = el.dataset.colKey;
+        if (!allPossibleFloorColumns.includes(key) || visibleFloorColumns.has(key)) {
+            el.style.display = '';
+        } else {
+            el.style.display = 'none';
+        }
+    });
+}
 
     function clearFilters(render = true) {
         document.getElementById('filterCountry').value = '';

@@ -66,7 +66,7 @@
         /* Table Styles */
         .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; }
-        th, td { text-align: left; padding: 14px 16px; font-size: 14px; border-bottom: 1px solid var(--border-color); white-space: nowrap; transition: background-color 0.2s; }
+        th, td { text-align: left; padding: 6px 8px; font-size: 13px; border-bottom: 1px solid var(--border-color); white-space: nowrap; transition: background-color 0.2s; }
         th { background: var(--bg); color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; position: sticky; top: 0; z-index: 1; }
         tr:last-child td { border-bottom: none; }
         
@@ -95,21 +95,26 @@
         .empty-state i { font-size: 4rem; color: #cbd5e0; margin-bottom: 1rem; }
         .empty-state p { font-size: 1.1rem; color: var(--text-secondary); }
 
-         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 41, 59, 0.6); z-index: 1001; display: none; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s; }
-        .modal-overlay.show { display: flex; opacity: 1; }
-        .modal-content { background: var(--card-bg); color: var(--text-primary); border-radius: 12px; padding: 2rem; width: 90%; max-width: 500px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); transform: scale(0.95); transition: transform 0.3s; }
-        .modal-overlay.show .modal-content { transform: scale(1); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .modal-title { font-size: 1.5rem; font-weight: 700; }
-        .modal-close-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary); }
-        .modal-footer { margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem; }
+        .btn-icon { 
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 5px;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+.btn-icon:hover {
+    color: var(--primary-blue);
+}
+/* Add this new style */
+.btn-icon.delete:hover {
+    color: var(--danger-red);
+}
 
-        /* Table Styles */
-        th { z-index: 1; }
-        .btn-icon { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; color: var(--text-secondary); }
-        .btn-icon:hover { background-color: var(--bg); }
-        .btn-icon.delete-btn:hover { color: var(--danger-red); }
+
+
+
     </style>
 </head>
 <body>
@@ -170,9 +175,7 @@
                 <button class="btn btn-export" id="exportBtn" onclick="exportToExcel()" disabled>
                     <i class="fas fa-file-excel"></i> Export All
                 </button>
-                <button class="btn btn-primary" onclick="showToast('Add New Rate functionality coming soon!', 'info')">
-                    <i class="fas fa-plus"></i> Add New Rate
-                </button>
+                
             </div>
         </div>
 
@@ -182,18 +185,6 @@
                     <thead id="ratesTableHeader"></thead>
                     <tbody id="ratesTableBody"></tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-    <!-- MODAL CONTAINER -->
-    <div class="modal-overlay" id="appModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle"></h2>
-                <button class="modal-close-btn" id="modalCloseBtn">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Dynamic content will be injected here -->
             </div>
         </div>
     </div>
@@ -216,10 +207,6 @@
     const dropdownMenu = document.getElementById('dropdownMenu');
     const selectedValueSpan = document.getElementById('selectedValue');
     const templateBtn = document.getElementById('templateBtn');
-     const appModal = document.getElementById('appModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
 
     // --- INITIALIZATION ---
     document.addEventListener('DOMContentLoaded', () => {
@@ -232,12 +219,6 @@
         document.getElementById('filterDestination').addEventListener('input', applyFilters);
         setupCustomDropdown();
         updateUIForNoProduct();
-        modalCloseBtn.addEventListener('click', () => appModal.classList.remove('show'));
-        appModal.addEventListener('click', (e) => {
-            if (e.target === appModal) {
-                appModal.classList.remove('show');
-            }
-        });
     });
 
     // --- UI & THEME ---
@@ -284,7 +265,6 @@
         showLoader(true);
         exportBtn.disabled = true;
         importBtn.disabled = true;
-        templateBtn.disabled = true;
         try {
             const response = await fetch(`/api/product-data/${productId}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -362,52 +342,17 @@
             });
             const actionsTd = document.createElement('td');
             const rowId = rowObject[Object.keys(rowObject)[0]]; 
-            actionsTd.innerHTML = ` <button class="btn-icon delete-btn" onclick="openDeleteConfirmation(${rowId}, '${destination.replace(/'/g, "\\'")}')" title="Delete Rate">
-                    <i class="fas fa-trash-alt"></i>
-                </button>`;
+            actionsTd.innerHTML = `
+            <button class="btn-icon delete" onclick="deleteRate('${rowId}')" title="Delete">
+        <i class="fas fa-trash-alt"></i>
+    </button>`;
+
             actionsTd.dataset.colKey = 'actions';
             row.appendChild(actionsTd);
             tableBody.appendChild(row);
         });
 
         applyFloorView();
-    }
-
-
-     function openDeleteConfirmation(rateId, destination) {
-        modalTitle.textContent = 'Confirm Deletion';
-        modalBody.innerHTML = `
-            <p>Are you sure you want to permanently delete the rate for <strong>${destination}</strong>?</p>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">This action cannot be undone.</p>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="appModal.classList.remove('show')">Cancel</button>
-                <button class="btn btn-danger" onclick="handleDeleteRate(${rateId})">Confirm Delete</button>
-            </div>
-        `;
-        appModal.classList.add('show');
-    }
-
-    async function handleDeleteRate(rateId) {
-        const productId = document.getElementById('productSelect').value;
-        showLoader(true);
-        try {
-            const response = await fetch(`/api/rate/${productId}/${rateId}`, {
-                method: 'DELETE'
-            });
-            
-            const result = await response.json();
-            if (!response.ok) {
-                 throw new Error(result.message || 'Server responded with an error.');
-            }
-
-            showToast('Rate deleted successfully!', 'success');
-            appModal.classList.remove('show');
-            await loadProductData(productId); 
-        } catch (error) {
-            showToast(error.message || 'Failed to delete rate.', 'error');
-        } finally {
-            showLoader(false);
-        }
     }
 
     // --- CUSTOM DROPDOWN LOGIC ---
@@ -590,6 +535,55 @@ function exportToExcel() {
         // Trigger download by navigating to the new backend endpoint
         window.location.href = `/api/template/${productId}`;
     }
+
+// --- Inside the main <script> tag in dashboard.html ---
+
+/**
+ * Prompts the admin for confirmation and sends a request to delete a specific rate.
+ * @param {string|number} rateId - The unique identifier for the rate to be deleted.
+ */
+async function deleteRate(rateId) {
+    // Get the currently selected product ID from the dropdown
+    const productId = document.getElementById('productSelect').value;
+    if (!productId) {
+        showToast("Could not identify the current product.", "error");
+        return;
+    }
+
+    // Use a confirmation dialog to prevent accidental deletion
+    if (!confirm('Are you sure you want to permanently delete this rate?')) {
+        return;
+    }
+
+    showLoader(true);
+    try {
+        // The backend route for deletion is already defined in adminRoutes.js
+        const response = await fetch(`/api/rate/${productId}/${rateId}`, {
+            method: 'DELETE'
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            // Throw an error to be caught by the catch block
+            throw new Error(result.message || 'Failed to delete the rate.');
+        }
+
+        showToast('Rate deleted successfully.', 'success');
+        
+        // Refresh the table data to reflect the deletion
+        await loadProductData(productId);
+
+    } catch (error) {
+        console.error('Deletion failed:', error);
+        showToast(error.message, 'error');
+    } finally {
+        showLoader(false);
+    }
+}
+
+
+
 
 
 

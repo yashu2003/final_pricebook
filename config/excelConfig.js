@@ -3,6 +3,7 @@ const COLUMN_MAPPINGS = {
     'international_outbound_rates': {
         'id': 'ID',
         'country': 'Country',
+        'currency':'CURRENCY',
         'call_type': 'Type',
         'destid': 'DEST ID',
         'destination': 'Destination',
@@ -20,9 +21,23 @@ const COLUMN_MAPPINGS = {
         'small_volume_list_price_usd': 'Small Vol List Price USD',
         'small_volume_margin_percent': 'Small Vol Margin %',
         'refer_legend': 'Refer Legend',
+       
         'sl_internal': 'SL (Internal)',
         'comments_internal': 'Comments (Internal)'
     },
+    'international_surcharge':{
+        'id': 'ID',
+         'obc_region_country':'OBC Region Country',
+    'obc_region_destination':'OBC Region Destination',
+    'origin_country_code': 'Origin Country Code',
+    'origin_country_name': 'Origin Country Name',
+    'dest_id': 'Dest ID',
+    'region_type_co': 'Region Type - CO',
+    'amount': 'Surcharge Amount',
+    'currency' :'Currency',
+    'key_internal':'KEY (Internal)',
+    'amount_usd':'Amount (USD)'
+    }
     // Add other product mappings here if needed
 };
 
@@ -84,6 +99,19 @@ const TEMPLATE_COLUMNS = {
         'SL (Internal)',
         'Comments (Internal)'
     ],
+    'international_surcharge':[
+         'ID',
+         'OBC Region Country',
+    'OBC Region Destination',
+    'Origin Country Code',
+     'Origin Country Name',
+     'Dest ID',
+     'Region Type - CO',
+     'Surcharge Amount',
+    'Currency',
+    'KEY (Internal)',
+    'Amount (USD)'
+    ]
     // You can define template columns for other products here
     // 'pstn_replacement_fee': ['field1', 'field2', ...],
 };

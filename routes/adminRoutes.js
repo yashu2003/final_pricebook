@@ -85,7 +85,8 @@ router.get('/product-data/:productId', isAdminAuthenticated, async (req, res) =>
     const tableMap = {
         '1': 'pstn_replacement_fee',
         '2': 'pstn_replacement_outbound',
-        '3': 'international_outbound_rates'
+        '3': 'international_outbound_rates',
+        '4':'international_surcharge'
     };
     const tableName = tableMap[productId];
 
@@ -94,14 +95,14 @@ router.get('/product-data/:productId', isAdminAuthenticated, async (req, res) =>
     }
 
     try {
-        // 1. Fetch raw data from the database
+        // Fetch raw data from the database
         const queryText = `SELECT * FROM ${tableName} ORDER BY 1 ASC`;
         const result = await db.query(queryText);
         
-        // 2. Use the imported function to perform all server-side calculations
+        //  Use the imported function to perform all server-side calculations
         const processedData = calculateDerivedColumns(tableName, result.rows);
 
-        // 3. Send the final, processed data to the frontend
+        // Send the final, processed data to the frontend
         res.json({ success: true, data: processedData, tableName: tableName });
 
     } catch (err) {
@@ -123,7 +124,8 @@ router.post('/import/:productId', isAdminAuthenticated, async (req, res) => {
     const tableMap = {
         '1': { name: 'pstn_replacement_fee', pkey: 'pstn_rf_id' },
         '2': { name: 'pstn_replacement_outbound', pkey: 'pstn_outbound_rate_id' },
-        '3': { name: 'international_outbound_rates', pkey: 'id' }
+        '3': { name: 'international_outbound_rates', pkey: 'id' },
+         '4': { name: 'international_surcharge', pkey: 'id' }
     };
 
     const tableInfo = tableMap[productId];
@@ -187,7 +189,8 @@ router.get('/export/:productId', isAdminAuthenticated, async (req, res) => {
     const tableMap = {
         '1': 'pstn_replacement_fee',
         '2': 'pstn_replacement_outbound',
-        '3': 'international_outbound_rates'
+        '3': 'international_outbound_rates',
+        '4': 'international_surcharge'
     };
     const tableName = tableMap[productId];
 
@@ -209,8 +212,6 @@ router.get('/export/:productId', isAdminAuthenticated, async (req, res) => {
         const headerFont = { color: { argb: 'FFFFFFFF' }, bold: true };
         const boxBorder = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
 
-        // --- FIX 1: Right-align numeric columns ---
-        // List of all column keys that should be right-aligned
         const numericColumns = [
             'cost_usd', 'wholesale_cfp', 'mh_floor_usd', 'mh_floor_margin_percent',
             'cda_floor_price_usd', 'cda_floor_margin_percent', 'cpaas_high_volumes_floor_usd',
@@ -326,7 +327,7 @@ router.get('/export/:productId', isAdminAuthenticated, async (req, res) => {
 
 router.get('/template/:productId', isAdminAuthenticated, async (req, res) => {
     const { productId } = req.params;
-    const tableMap = { '3': 'international_outbound_rates' }; // Simplified for this example
+    const tableMap = { '3': 'international_outbound_rates', '4':'international_surcharge' }; // Simplified for this example
     const tableName = tableMap[productId];
 
     if (!tableName) {
@@ -387,15 +388,13 @@ const getTableInfo = (productId) => {
     const tableMap = {
         '1': { name: 'pstn_replacement_fee', pkey: 'pstn_rf_id' },
         '2': { name: 'pstn_replacement_outbound', pkey: 'pstn_outbound_rate_id' },
-        '3': { name: 'international_outbound_rates', pkey: 'id' }
+        '3': { name: 'international_outbound_rates', pkey: 'id' },
+        '4': {name : 'international_surcharge', pkey:'id'}
     };
     return tableMap[productId];
 };
 
-/**
- * DELETE /api/rate/:productId/:rateId
- * Deletes a specific rate from the database.
- */
+
 router.delete('/rate/:productId/:rateId', isAdminAuthenticated, async (req, res) => {
     const { productId, rateId } = req.params;
 

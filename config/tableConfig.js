@@ -1,153 +1,121 @@
 // backend/config/tableConfig.js
+const Decimal = require('decimal.js');
 
-// The custom roundUp function is no longer needed. Standard rounding will be used.
-
-// This helper function now uses standard rounding and is simpler.
+// Helper function using Decimal.js for precision
 function calculateMMFloor(row) {
-    const cost = parseFloat(row.cost_usd);
-    if (!isNaN(cost)) {
-        // Standard formula: cost / (1 - 0.15)
-        return cost / 0.85;
-    }
-    return NaN;
+    const cost = new Decimal(row.cost_usd || 0);
+    // Use .div() for precise division: cost / 0.85
+    return cost.div(0.85); 
 }
 
-function calculateListPrice(row) {
-    const mhFloorUsd = calculateMMFloor(row);
-    if (!isNaN(mhFloorUsd)) {
-        // Standard formula: MM Floor * 1.7
-        return mhFloorUsd * 1.7;
-    }
-    return NaN;
+// Helper function using Decimal.js
+function calculateListPrice(mhFloorUsd) {
+    // Use .times() for precise multiplication: mhFloorUsd * 1.7
+    return mhFloorUsd.times(1.7);
 }
-
 
 const DERIVED_COLUMN_CONFIG = {
-    // ... (Your other product configs remain the same)
-
     'international_outbound_rates': [
         {
             name: 'mh_floor_usd',
             formula: (row) => {
                 const value = calculateMMFloor(row);
-                // Return a formatted string with standard rounding
-                return typeof value === 'number' ? value.toFixed(4) : null;
+                return value.toDecimalPlaces(4).toFixed(4);
             }
         },
         {
             name: 'mh_floor_margin_percent',
             formula: (row) => {
                 const mhFloorUsd = calculateMMFloor(row);
-                const cost = parseFloat(row.cost_usd);
-                if (!isNaN(mhFloorUsd) && !isNaN(cost) && mhFloorUsd !== 0) {
-                    const value = ((mhFloorUsd - cost) / mhFloorUsd) * 100;
-                    return `${Math.floor(value)}%`;
-                }
-                return null;
+                const cost = new Decimal(row.cost_usd || 0);
+                if (mhFloorUsd.isZero()) return null;
+                const value = mhFloorUsd.minus(cost).div(mhFloorUsd).times(100);
+                return `${value.toDecimalPlaces(0, Decimal.ROUND_HALF_UP)}%`;
             }
         },
         {
             name: 'small_volume_list_price_usd',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                // Return a formatted string with standard rounding
-                return typeof listPrice === 'number' ? listPrice.toFixed(4) : null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                return listPrice.toDecimalPlaces(4).toFixed(4);
             }
         },
         {
             name: 'small_volume_margin_percent',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                const cost = parseFloat(row.cost_usd);
-                if (!isNaN(listPrice) && !isNaN(cost) && listPrice !== 0) {
-                    const value = ((listPrice - cost) / listPrice) * 100;
-                    return `${Math.floor(value)}%`;
-                }
-                return null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                const cost = new Decimal(row.cost_usd || 0);
+                if (listPrice.isZero()) return null;
+                const value = listPrice.minus(cost).div(listPrice).times(100);
+                return `${value.toDecimalPlaces(0, Decimal.ROUND_HALF_UP)}%`;
             }
         },
         {
             name: 'cda_floor_price_usd',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                if (!isNaN(listPrice)) {
-                    const cdaPrice = listPrice * 0.65;
-                    // Return a formatted string with standard rounding
-                    return typeof cdaPrice === 'number' ? cdaPrice.toFixed(4) : null;
-                }
-                return null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                const cdaPrice = listPrice.times(0.65);
+                return cdaPrice.toDecimalPlaces(4).toFixed(4);
             }
         },
+        // --- ADDED MISSING MARGIN CALCULATION ---
         {
             name: 'cda_floor_margin_percent',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                let cdaPrice;
-                if (!isNaN(listPrice)) {
-                    cdaPrice = listPrice * 0.65;
-                }
-                const cost = parseFloat(row.cost_usd);
-                if (!isNaN(cdaPrice) && !isNaN(cost) && cdaPrice !== 0) {
-                    const value = ((cdaPrice - cost) / cdaPrice) * 100;
-                    return `${Math.floor(value)}%`;
-                }
-                return null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                const cost = new Decimal(row.cost_usd || 0);
+                const cdaPrice = listPrice.times(0.65);
+                if (cdaPrice.isZero()) return null;
+                const value = cdaPrice.minus(cost).div(cdaPrice).times(100);
+                return `${value.toDecimalPlaces(0, Decimal.ROUND_HALF_UP)}%`;
             }
         },
         {
             name: 'cpaas_high_volumes_floor_usd',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                if (!isNaN(listPrice)) {
-                    const cpaasPrice = listPrice * 0.75;
-                    // Return a formatted string with standard rounding
-                    return typeof cpaasPrice === 'number' ? cpaasPrice.toFixed(4) : null;
-                }
-                return null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                const cpaasPrice = listPrice.times(0.75);
+                return cpaasPrice.toDecimalPlaces(4).toFixed(4);
             }
         },
+        // --- ADDED MISSING MARGIN CALCULATION ---
         {
             name: 'cpaas_high_volumes_margin_percent',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                let cpaasPrice;
-                if (!isNaN(listPrice)) {
-                    cpaasPrice = listPrice * 0.75;
-                }
-                const cost = parseFloat(row.cost_usd);
-                if (!isNaN(cpaasPrice) && !isNaN(cost) && cpaasPrice !== 0) {
-                    const value = ((cpaasPrice - cost) / cpaasPrice) * 100;
-                    return `${Math.floor(value)}%`;
-                }
-                return null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                const cost = new Decimal(row.cost_usd || 0);
+                const cpaasPrice = listPrice.times(0.75);
+                if (cpaasPrice.isZero()) return null;
+                const value = cpaasPrice.minus(cost).div(cpaasPrice).times(100);
+                return `${value.toDecimalPlaces(0, Decimal.ROUND_HALF_UP)}%`;
             }
         },
         {
             name: 'service_provider_medium_volume_floor_usd',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                if (!isNaN(listPrice)) {
-                    const spPrice = listPrice * 0.85;
-                    // Return a formatted string with standard rounding
-                    return typeof spPrice === 'number' ? spPrice.toFixed(4) : null;
-                }
-                return null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                const spPrice = listPrice.times(0.85);
+                return spPrice.toDecimalPlaces(4).toFixed(4);
             }
         },
+        // --- ADDED MISSING MARGIN CALCULATION ---
         {
             name: 'service_provider_medium_volume_margin_percent',
             formula: (row) => {
-                const listPrice = calculateListPrice(row);
-                let spPrice;
-                if (!isNaN(listPrice)) {
-                    spPrice = listPrice * 0.85;
-                }
-                const cost = parseFloat(row.cost_usd);
-                if (!isNaN(spPrice) && !isNaN(cost) && spPrice !== 0) {
-                    const value = ((spPrice - cost) / spPrice) * 100;
-                    return `${Math.floor(value)}%`;
-                }
-                return null;
+                const mhFloorUsd = calculateMMFloor(row);
+                const listPrice = calculateListPrice(mhFloorUsd);
+                const cost = new Decimal(row.cost_usd || 0);
+                const spPrice = listPrice.times(0.85);
+                if (spPrice.isZero()) return null;
+                const value = spPrice.minus(cost).div(spPrice).times(100);
+                return `${value.toDecimalPlaces(0, Decimal.ROUND_HALF_UP)}%`;
             }
         }
     ]
